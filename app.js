@@ -72,123 +72,76 @@ restServer.use(
 restServer.use(restify.bodyParser());
 restServer.use(restify.CORS());
 
-
-/* rest function */
-var rPost = function(req,res,next){
-	res.send(201,"post action!");
-	return next();
-}
-var rSend = function(req,res,next){
-	console.log('/get', req.params.XxxX);
-	var param = req.params.XxxX;
-	try{
-		res.send(JSON.stringify({ p : param }));
-	}catch(e){ 
-		console.log('err:',e);
-		res.send(JSON.stringify({err:"505 server error!"}));
-	}
-	//return next();
-}
-/* rLogin 
- $.ajax({
-           url: "http://localhost:8081/login",
-            async: false,
-            type: "POST",
-            data: {
-                blob: {wob:"1",job:"2", ar:[1,2,{a:'b'}]}
-            },
-            success: function(msg){
-                console.log('msg', msg);
-            }
-        });
-
- $.ajax({
-           url: "http://localhost:8081/login/xxxxx@gmail.com",
+/*      var request = $.ajax({
+            url: "http://localhost:8081/login/gmail@gmail.com",
             async: false,
             type: "GET",
-            success: function(msg){
-                console.log('msg', msg);
-            },
             contentType: "application/x-www-form-urlencoded",
             dataType: "json",
-        });
-
+       });
 */
+/* rest function */
 restServer.get('/login/:address', function(req, res, next) {
 
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "X-Requested-With");
 
     var keyg = keygen(50,'');
-    // console.log(keyg)
-    // console.log(req.params)
-    // console.log(req.params.address)
-    userDB.add(req.params.address, keyg);
-
+    console.log('keyg',keyg);
+try{
+    dbUpd(req.params.address, keyg);
+}catch(e){
+    console.log('err:',e);
+}
     res.send(200, JSON.stringify({ key : keyg }));
-    
     res.end();
+    console.log('fixd');
     return next();
 });
 
-var userDB = {
-    userList: [],
-    add: function(id, key){
-        console.log('user add!', userDB.userList);
-        userDB.userList.push({"id": id,"key": key});
-    }
-};
-
-/* rest URI 
-restServer.put('/get', rSend);
-restServer.get('/get/:XxxX', rSend);
-restServer.head('/get/:XxxX',rSend);
-restServer.del('/get/:XxxX', rSend);
-restServer.post('/hello', rPost);
-*/
-
 /* DB制御 */
-/*
 var db = mongoose.connect('mongodb://localhost/hedb');
-var heschema = new mongoose.Schema({ sect  : Number, point : Number });
+var heschema = new mongoose.Schema({ address: String, keyg: String });
 var model = db.model('heDB', heschema);
 
-var heUpd = function(_sect, _point){
-    fncSect(_sect, function(){
-        //console.log('update',_sect,_point);
-        //var mdl = new model();
+var dbUpd = function(address, keyg){
+    fncSect(address, function(){
+        console.log('update', address, keyg);
         model.update(
-            {sect:_sect},
-            {$inc : {point : _point }},
+            {"address": address},
+            {$set : {keyg : keyg }},
             { upsert : false , multi : false},
             function(err){ 
                 if(err){ console.log('heUpd err:',err);}
             }
         );
     }, function() {
-        //console.log('insert', _sect, _point);
+        console.log('insert', address, keyg);
         var mdl = new model();
-        mdl.sect=_sect;
-        mdl.point=_point;
+        mdl.address=address;
+        mdl.keyg=keyg;
         mdl.save(function(err){ if(err){ console.log('err', err);} });
     });
 }
-var fncSect = function(_sect, updfnc, insfnc){
-    model.find({sect:_sect}, function(err,item){
+var fncSect = function(address, updfnc, insfnc){
+    console.log('fncSect');
+    model.find({"address": address}, function(err,item){
+        console.log('fncSect-001',err,item);
         if(err || item===null){return;}
-        //console.log('isSect : ',item);
         if(item.length){
             updfnc();
         }else{
             insfnc();
         }
-        //shows();
+        show();
     });
 }
+
+/* db base */
 var shows = function(){
     model.find({}, function(err, item){
         item.forEach(function(lst){
-            console.log('SECTION:',lst.sect, 'POINT:', lst.point, 'JSON:', lst);
+            console.log('address:',lst.address, 'keyg:', lst.keyg, 'JSON:', lst);
         });
     });
 }
@@ -202,7 +155,6 @@ var deleteAllGdata=function(){
         console.log('err:', err);
     });
 }
-*/
 
 /* utill*/
 var keygen = function(n, b) {
