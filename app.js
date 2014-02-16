@@ -1,6 +1,6 @@
 /* server define */
 var restServer = require('restify').createServer();
-restServer.listen(8081, function() {
+restServer.listen(80, function() {
 	console.log('listening at ', restServer.name, restServer.url);
 });
 
