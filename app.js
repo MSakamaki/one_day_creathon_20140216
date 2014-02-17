@@ -14,7 +14,7 @@ var twoa = new OAuth(
     process.env.TW_OAUTH_KEY, 
     process.env.TW_OAUTH_SECRET, 
     "1.0",
-　   "http://127.0.0.1/auth/twitter/callback",
+　   "http://" + process.env.SERVICE_URL + "/auth/twitter/callback",
  　  "HMAC-SHA1"
   );
 
@@ -120,7 +120,7 @@ restServer.get('/login/:address', function(req, res, next) {
     return next();
 });
 
-/* DB制御 
+/* DB制御 */
 var db = mongoose.connect('mongodb://localhost/hedb');
 var heschema = new mongoose.Schema({ address: String, keyg: String });
 var model = db.model('heDB', heschema);
