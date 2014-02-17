@@ -5,16 +5,14 @@ var restify  = require('restify'),
     http = require("http"),
     url  = require("url"),
     path = require("path"),
-    fs   = require("fs"),
-    //port = process.argv[2] || 80,
     OAuth = require('oauth').OAuth;
 
 /************************ OAuth ************************/
-var oa = new OAuth(
+var twoa = new OAuth(
     "https://api.twitter.com/oauth/request_token",
     "https://api.twitter.com/oauth/access_token",
-    "", 
-    "", 
+    process.env.TW_OAUTH_KEY, 
+    process.env.TW_OAUTH_SECRET, 
     "1.0",
 　   "http://127.0.0.1/auth/twitter/callback",
  　  "HMAC-SHA1"
@@ -38,116 +36,50 @@ app.configure(function(){
     app.use(express.session());
     app.use(express.static(path.join(__dirname, 'public')));
 });
-app.get('/', routes.index);
+//app.get('/', '');
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
 });
-/*
-http.createServer(function(request, response) {
-    var Response = {
-        "200":function(file, filename){
-            var extname = path.extname(filename);
-            var header = {
-                "Access-Control-Allow-Origin":"*",
-                "Pragma": "no-cache",
-                "Cache-Control" : "no-cache"       
-            }
 
-            response.writeHead(200, header);
-            response.write(file, "binary");
-            response.end();
-        },
-        "404":function(){
-            response.writeHead(404, {"Content-Type": "text/plain"});
-            response.write("404 Not Found\n");
-            response.end();
-
-        },
-        "500":function(err){
-            response.writeHead(500, {"Content-Type": "text/plain"});
-            response.write(err + "\n");
-            response.end();
-
-        }
-    }
-
-    var twitterAouth = function(req, res){
-        oa.getOAuthRequestToken(function(error, oauth_token, oauth_token_secret, results){
-          if (error) {
+app.get('/auth/twitter', function(req, res){
+    twoa.getOAuthRequestToken(function(error, oauth_token, oauth_token_secret, results){
+        if (error) {
             console.log(error);
-           res.send("yeah no. didn't work.");
-          } else {
-            req.session={};
+            res.send("yeah no. didn't work.");
+        } else {
             req.session.oauth = {};
             req.session.oauth.token = oauth_token;
             console.log('oauth.token: ' + req.session.oauth.token);
             req.session.oauth.token_secret = oauth_token_secret;
             console.log('oauth.token_secret: ' + req.session.oauth.token_secret);
-            res.writeHead(302, {'Location': 'https://twitter.com/oauth/authenticate?oauth_token='+oauth_token});
-            res.end();
-          }
-       });
-    };
-    var twitterAouthCallback = function(req, res){
+            res.redirect('https://twitter.com/oauth/authenticate?oauth_token='+oauth_token);
+        }
+    });
+});
 
+app.get('/auth/twitter/callback', function(req, res, next){
+    if (req.session.oauth) {
         var url_parts = url.parse(req.url, true);
-        //console.log('url_parts',url_parts);
-        var query = url_parts.query;
-        //console.log('query',query);
-      if (query) {
-        req.session ={};
-        req.session.oauth ={};
-        req.session.oauth.verifier = query.oauth_verifier;
+        console.log('oauth_verifier:', url_parts.query.oauth_verifier);
+        req.session.oauth.verifier = url_parts.query.oauth_verifier;
+        console.log('oauth:', req.session.oauth);
         var oauth = req.session.oauth;
-        oa.getOAuthAccessToken(oauth.token,oauth.token_secret,oauth.verifier, 
+        twoa.getOAuthAccessToken(oauth.token,oauth.token_secret,oauth.verifier,
         function(error, oauth_access_token, oauth_access_token_secret, results){
-          if (error){
-            console.log('[ERROR]',error);
-          } else {
-            req.session.oauth.access_token = oauth_access_token;
-            req.session.oauth.access_token_secret = oauth_access_token_secret;
-            console.log('[SUCESS]',results);
-          }
+            if (error){
+                console.log(error);
+                res.send("yeah something broke.");
+            } else {
+                req.session.oauth.access_token = oauth_access_token;
+                req.session.oauth.access_token_secret = oauth_access_token_secret;
+                console.log(results);
+                res.send("worked. nice one.");
+            }
         });
-      }
+    } else {
+        next(new Error("you're not supposed to be here."));
     }
-
-    var send = function(_file){
-        fs.exists(_file, function(exists){
-            console.log(_file+" "+exists);
-            if (!exists) { Response["404"](); return ; }
-            if (fs.statSync(_file).isDirectory()) { _file += '/index.html'; }
-
-            fs.readFile(_file, "binary", function(err, file){
-                if (err) { Response["500"](err); return ; }
-                Response["200"](file, _file);   
-            }); 
-        });
-    }
-
-    var uri = url.parse(request.url).pathname,
-        filename = path.join(process.cwd() + '/public', uri);
-    console.log("uri", uri);
-    switch(uri){
-        case "/auth/twitter":
-            twitterAouth(request, response);
-            break;
-        case "/auth/twitter/callback":
-            twitterAouthCallback(request, response);
-            send(process.cwd() + '/public');
-            break;
-        default:
-            send(filename);
-            break;
-    }
-
-}).listen(parseInt(port, 10));
-*/
-
-
-
-console.log("Server running at http://localhost:" + port );
-
+});
 
 /************************  REST Server *******************************/
 restServer.use(
@@ -177,11 +109,11 @@ restServer.get('/login/:address', function(req, res, next) {
 
     var keyg = keygen(50,'');
     console.log('keyg',keyg);
-try{
-    //dbUpd(req.params.address, keyg);
-}catch(e){
-    console.log('err:',e);
-}
+    try{
+        //dbUpd(req.params.address, keyg);
+    }catch(e){
+        console.log('err:',e);
+    }
     res.send(200, JSON.stringify({ key : keyg }));
     res.end();
     console.log('fixd');
