@@ -14,7 +14,7 @@ var twoa = new OAuth(
     process.env.TW_OAUTH_KEY, 
     process.env.TW_OAUTH_SECRET, 
     "1.0",
-　   "http://" + process.env.SERVICE_URL + "/auth/twitter/callback",
+　   "http://" + process.env.SERVICE_URL + "/",
  　  "HMAC-SHA1"
   );
 
@@ -57,7 +57,7 @@ app.get('/auth/twitter', function(req, res){
     });
 });
 
-app.get('/auth/twitter/callback', function(req, res, next){
+app.get('/', function(req, res, next){
     if (req.session.oauth) {
         var url_parts = url.parse(req.url, true);
         console.log('oauth_verifier:', url_parts.query.oauth_verifier);
