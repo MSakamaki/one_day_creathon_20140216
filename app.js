@@ -38,12 +38,11 @@ app.configure(function(){
     app.use(express.session());
     app.use(express.static(path.join(__dirname, 'public')));
 });
-   
 app.get('/', routes.index);
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
 });
-
+/*
 http.createServer(function(request, response) {
     var Response = {
         "200":function(file, filename){
@@ -72,7 +71,6 @@ http.createServer(function(request, response) {
         }
     }
 
-    /* twitter oauth */
     var twitterAouth = function(req, res){
         oa.getOAuthRequestToken(function(error, oauth_token, oauth_token_secret, results){
           if (error) {
@@ -144,7 +142,7 @@ http.createServer(function(request, response) {
     }
 
 }).listen(parseInt(port, 10));
-
+*/
 
 
 
