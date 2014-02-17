@@ -13,8 +13,8 @@ var restify  = require('restify'),
 var oa = new OAuth(
     "https://api.twitter.com/oauth/request_token",
     "https://api.twitter.com/oauth/access_token",
-    "JeOysNubzLmLjj5FqBnlQ", 
-    "9uZnyieaREeakm9z3Efn2wR4ukkecrfKVftplYBS4I", 
+    "", 
+    "", 
     "1.0",
 　   "http://127.0.0.1/auth/twitter/callback",
  　  "HMAC-SHA1"
