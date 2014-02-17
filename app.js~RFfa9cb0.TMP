@@ -1,12 +1,11 @@
 /* server define */
-var restify  = require('restify'),
-    mongoose = require('mongoose'),
-    express  = require('express'),
+var restify = require('restify'),
+    mongoose    = require('mongoose'),
     http = require("http"),
     url  = require("url"),
     path = require("path"),
     fs   = require("fs"),
-    //port = process.argv[2] || 80,
+    port = process.argv[2] || 80,
     OAuth = require('oauth').OAuth;
 
 /************************ OAuth ************************/
@@ -24,24 +23,6 @@ var oa = new OAuth(
 var restServer  =restify.createServer();
 var restService = restServer.listen(8081, function() {
 	console.log('listening at ', restServer.name, restServer.url);
-});
-
-var app = express();
-app.configure(function(){
-    app.set('port', 80);
-    app.use(express.favicon());
-    app.use(express.logger('dev'));
-    app.use(express.bodyParser());
-    app.use(express.methodOverride());
-    //express -s をつけると以下の2行が付きます。
-    app.use(express.cookieParser('one day creathion'));
-    app.use(express.session());
-    app.use(express.static(path.join(__dirname, 'public')));
-});
-   
-app.get('/', routes.index);
-http.createServer(app).listen(app.get('port'), function(){
-  console.log("Express server listening on port " + app.get('port'));
 });
 
 http.createServer(function(request, response) {
@@ -85,6 +66,7 @@ http.createServer(function(request, response) {
             console.log('oauth.token: ' + req.session.oauth.token);
             req.session.oauth.token_secret = oauth_token_secret;
             console.log('oauth.token_secret: ' + req.session.oauth.token_secret);
+            //res.redirect('https://twitter.com/oauth/authenticate?oauth_token='+oauth_token);
             res.writeHead(302, {'Location': 'https://twitter.com/oauth/authenticate?oauth_token='+oauth_token});
             res.end();
           }
@@ -93,9 +75,9 @@ http.createServer(function(request, response) {
     var twitterAouthCallback = function(req, res){
 
         var url_parts = url.parse(req.url, true);
-        //console.log('url_parts',url_parts);
+        console.log('url_parts',url_parts);
         var query = url_parts.query;
-        //console.log('query',query);
+        console.log('query',query);
       if (query) {
         req.session ={};
         req.session.oauth ={};
@@ -104,11 +86,15 @@ http.createServer(function(request, response) {
         oa.getOAuthAccessToken(oauth.token,oauth.token_secret,oauth.verifier, 
         function(error, oauth_access_token, oauth_access_token_secret, results){
           if (error){
-            console.log('[ERROR]',error);
+            console.log(error);
+            //res.send("yeah something broke.");
+            send();
           } else {
             req.session.oauth.access_token = oauth_access_token;
             req.session.oauth.access_token_secret = oauth_access_token_secret;
-            console.log('[SUCESS]',results);
+            console.log('results',results);
+            //res.send("worked. nice one.");
+            send();
           }
         });
       }
@@ -118,7 +104,7 @@ http.createServer(function(request, response) {
         fs.exists(_file, function(exists){
             console.log(_file+" "+exists);
             if (!exists) { Response["404"](); return ; }
-            if (fs.statSync(_file).isDirectory()) { _file += '/index.html'; }
+            if (fs.statSync(_file).isDirectory()) { _file += 'index.html'; }
 
             fs.readFile(_file, "binary", function(err, file){
                 if (err) { Response["500"](err); return ; }
@@ -136,10 +122,9 @@ http.createServer(function(request, response) {
             break;
         case "/auth/twitter/callback":
             twitterAouthCallback(request, response);
-            send(process.cwd() + '/public');
             break;
         default:
-            send(filename);
+            send();
             break;
     }
 
